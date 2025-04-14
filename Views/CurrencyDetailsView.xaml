@@ -1,0 +1,52 @@
+﻿<Page x:Class="CryptoTrackerApp.Views.CurrencyDetailsView"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:oxy="http://oxyplot.org/wpf"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="CurrencyDetailsView">
+    <ScrollViewer>
+        <StackPanel Margin="20" Orientation="Vertical">
+            <Button Content="Back" Command="{Binding GoBackCommand}" Margin="0,0,0,10" Width="80"/>
+            <Button Content="Toggle Chart Style"
+              Command="{Binding ToggleChartStyleCommand}"
+              CommandParameter="{Binding Details.Id}"
+              HorizontalAlignment="Right" Margin="0,0,0,10"/>
+
+            <TextBlock Text="{Binding Details.Name}" FontSize="26" FontWeight="Bold" Margin="0,0,0,10"/>
+            <TextBlock Text="{Binding Details.Symbol}" FontSize="18" Foreground="Gray" Margin="0,0,0,15"/>
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="Price (USD):" FontWeight="Bold" Grid.Row="0" Grid.Column="0"/>
+                <TextBlock Text="{Binding Details.CurrentPrice, StringFormat={}{0:C2}}" Grid.Row="0" Grid.Column="2"/>
+
+                <TextBlock Text="Market Cap:" FontWeight="Bold" Grid.Row="1" Grid.Column="0" Margin="0,5,0,0"/>
+                <TextBlock Text="{Binding Details.MarketCap, StringFormat={}{0:C0}}" Grid.Row="1" Grid.Column="2" Margin="0,5,0,0"/>
+
+                <TextBlock Text="Volume:" FontWeight="Bold" Grid.Row="2" Grid.Column="0" Margin="0,5,0,0"/>
+                <TextBlock Text="{Binding Details.TotalVolume, StringFormat={}{0:N0}}" Grid.Row="2" Grid.Column="2" Margin="0,5,0,0"/>
+
+                <TextBlock Text="24h Change:" FontWeight="Bold" Grid.Row="3" Grid.Column="0" Margin="0,5,0,0"/>
+                <TextBlock Text="{Binding Details.PriceChangePercentage24h, StringFormat={}{0:+0.##%;-0.##%;0.##%}}"
+                   Grid.Row="3" Grid.Column="2" Margin="0,5,0,0"
+                   Foreground="{Binding Details.PriceChangePercentage24h, Converter={StaticResource PercentageColorConverter}}"/>
+            </Grid>
+
+            <TextBlock Text="Description:" FontWeight="Bold" Margin="0,20,0,5"/>
+            <TextBlock Text="{Binding Details.Description}" TextWrapping="Wrap" Margin="0,0,0,20"/>
+
+            <TextBlock Text="Price Chart (7 days):" FontWeight="Bold" Margin="0,10,0,5"/>
+            <oxy:PlotView x:Name="PlotView" Model="{Binding PriceChart}" Height="300"/>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

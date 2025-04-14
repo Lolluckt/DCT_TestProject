@@ -1,0 +1,17 @@
+﻿<Application x:Class="CryptoTrackerApp.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:infrastructure="clr-namespace:CryptoTrackerApp.Infrastructure"
+             StartupUri="Views/ShellView.xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Themes/LightTheme.xaml" />
+                <!--<ResourceDictionary Source="/Themes/DarkTheme.xaml" />-->
+            </ResourceDictionary.MergedDictionaries>
+            <local:PercentageColorConverter x:Key="PercentageColorConverter" 
+                xmlns:local="clr-namespace:CryptoTrackerApp.Infrastructure"/>
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <infrastructure:BoolToRotationConverter x:Key="BoolToRotationConverter"/>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
