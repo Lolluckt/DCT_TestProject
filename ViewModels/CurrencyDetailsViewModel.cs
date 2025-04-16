@@ -6,8 +6,7 @@ using CryptoTrackerApp.Services;
 using OxyPlot;
 using OxyPlot.Axes;
 using OxyPlot.Series;
-using System;
-using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 namespace CryptoTrackerApp.ViewModels
 {
@@ -15,14 +14,9 @@ namespace CryptoTrackerApp.ViewModels
     {
         private readonly ICoinGeckoService _coinService;
 
-        [ObservableProperty]
-        private CurrencyDetails details;
-
-        [ObservableProperty]
-        private PlotModel priceChart;
-
-        [ObservableProperty]
-        private bool isCandlestick;
+        [ObservableProperty] private CurrencyDetails details;
+        [ObservableProperty] private PlotModel priceChart;
+        [ObservableProperty] private bool isCandlestick;
 
         public CurrencyDetailsViewModel(ICoinGeckoService coinService)
         {
@@ -30,101 +24,18 @@ namespace CryptoTrackerApp.ViewModels
             IsCandlestick = false;
         }
 
+        public string DescriptionPlain =>
+            string.IsNullOrWhiteSpace(Details?.Description)
+                ? "No description provided."
+                : Regex.Replace(Details.Description, "<.*?>", string.Empty).Trim();
+        [RelayCommand] public void GoBack() => ShellViewModel.CurrentNavService.GoBack();
+
         [RelayCommand]
         public async Task ToggleChartStyleAsync()
         {
-            if (Details == null)
-                return;
+            if (Details == null) return;
             IsCandlestick = !IsCandlestick;
             await LoadChartAsync(Details.Id);
-        }
-
-        [RelayCommand]
-        public void GoBack()
-        {
-            ShellViewModel.CurrentNavService.GoBack();
-        }
-
-        private async Task LoadChartAsync(string coinId)
-        {
-            try
-            {
-                PriceChart = new PlotModel();
-                OnPropertyChanged(nameof(PriceChart));
-
-                PlotModel newModel;
-
-                if (!IsCandlestick)
-                {
-                    var dataPoints = await _coinService.GetCoinMarketChartAsync(coinId, 7);
-                    newModel = new PlotModel { Title = $"{Details?.Name} Price (7 Days)" };
-
-                    var dateAxis = new DateTimeAxis
-                    {
-                        Position = AxisPosition.Bottom,
-                        StringFormat = "MM-dd",
-                        Title = "Date",
-                        IntervalType = DateTimeIntervalType.Days,
-                        MinorIntervalType = DateTimeIntervalType.Hours
-                    };
-                    var valueAxis = new LinearAxis
-                    {
-                        Position = AxisPosition.Left,
-                        Title = "Price (USD)"
-                    };
-                    newModel.Axes.Add(dateAxis);
-                    newModel.Axes.Add(valueAxis);
-
-                    var lineSeries = new LineSeries
-                    {
-                        MarkerType = MarkerType.Circle,
-                        Title = Details?.Name
-                    };
-                    if (dataPoints.Count > 1)
-                        lineSeries.Color = dataPoints[^1].Y >= dataPoints[0].Y ? OxyColors.Green : OxyColors.Red;
-                    lineSeries.Points.AddRange(dataPoints);
-                    newModel.Series.Add(lineSeries);
-                }
-                else
-                {
-                    var candleData = await _coinService.GetCoinOHLCAsync(coinId, 7);
-                    newModel = new PlotModel { Title = $"{Details?.Name} Candlestick (7 Days)" };
-
-                    var dateAxis = new DateTimeAxis
-                    {
-                        Position = AxisPosition.Bottom,
-                        StringFormat = "MM-dd",
-                        Title = "Date",
-                        IntervalType = DateTimeIntervalType.Days,
-                        MinorIntervalType = DateTimeIntervalType.Hours
-                    };
-                    var valueAxis = new LinearAxis
-                    {
-                        Position = AxisPosition.Left,
-                        Title = "Price (USD)"
-                    };
-                    newModel.Axes.Add(dateAxis);
-                    newModel.Axes.Add(valueAxis);
-
-                    var candleSeries = new CandleStickSeries
-                    {
-                        IncreasingColor = OxyColors.Green,
-                        DecreasingColor = OxyColors.Red
-                    };
-                    foreach (var c in candleData)
-                    {
-                        candleSeries.Items.Add(new HighLowItem(c.X, c.High, c.Low, c.Open, c.Close));
-                    }
-                    newModel.Series.Add(candleSeries);
-                }
-                PriceChart = newModel;
-                OnPropertyChanged(nameof(PriceChart));
-                PriceChart.InvalidatePlot(true);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine("Error while loading plot: " + ex.Message);
-            }
         }
         public async void OnNavigatedTo(object parameter)
         {
@@ -133,12 +44,81 @@ namespace CryptoTrackerApp.ViewModels
                 try
                 {
                     Details = await _coinService.GetCurrencyDetailsAsync(coinId);
+                    OnPropertyChanged(nameof(DescriptionPlain));
                     await LoadChartAsync(coinId);
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine("Error while transfering: " + ex.Message);
+                    System.Diagnostics.Debug.WriteLine("Navigation error: " + ex.Message);
                 }
+            }
+        }
+        private async Task LoadChartAsync(string coinId)
+        {
+            try
+            {
+                PlotModel model;
+
+                if (!IsCandlestick)
+                {
+                    var data = await _coinService.GetCoinMarketChartAsync(coinId, 7);
+
+                    model = new PlotModel { Title = $"{Details?.Name} Price (7 Days)" };
+                    model.Axes.Add(new DateTimeAxis
+                    {
+                        Position = AxisPosition.Bottom,
+                        StringFormat = "MM-dd",
+                        Title = "Date",
+                        IntervalType = DateTimeIntervalType.Days
+                    });
+                    model.Axes.Add(new LinearAxis
+                    {
+                        Position = AxisPosition.Left,
+                        Title = "Price (USD)"
+                    });
+
+                    var line = new LineSeries
+                    {
+                        MarkerType = MarkerType.Circle,
+                        Color = data[^1].Y >= data[0].Y ? OxyColors.Green : OxyColors.Red
+                    };
+                    line.Points.AddRange(data);
+                    model.Series.Add(line);
+                }
+                else
+                {
+                    var candles = await _coinService.GetCoinOHLCAsync(coinId, 7);
+
+                    model = new PlotModel { Title = $"{Details?.Name} Candlestick (7 Days)" };
+                    model.Axes.Add(new DateTimeAxis
+                    {
+                        Position = AxisPosition.Bottom,
+                        StringFormat = "MM-dd",
+                        Title = "Date",
+                        IntervalType = DateTimeIntervalType.Days
+                    });
+                    model.Axes.Add(new LinearAxis
+                    {
+                        Position = AxisPosition.Left,
+                        Title = "Price (USD)"
+                    });
+
+                    var series = new CandleStickSeries
+                    {
+                        IncreasingColor = OxyColors.Green,
+                        DecreasingColor = OxyColors.Red
+                    };
+                    foreach (var c in candles)
+                        series.Items.Add(new HighLowItem(c.X, c.High, c.Low, c.Open, c.Close));
+
+                    model.Series.Add(series);
+                }
+                PriceChart = model;
+                PriceChart.InvalidatePlot(true);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Plot error: " + ex.Message);
             }
         }
     }
