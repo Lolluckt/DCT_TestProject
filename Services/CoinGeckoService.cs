@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using CryptoTrackerApp.Infrastructure.Http;
 using CryptoTrackerApp.Models;
 using Microsoft.Extensions.Configuration;
 using OxyPlot;
@@ -11,25 +11,25 @@ using OxyPlot.Axes;
 
 namespace CryptoTrackerApp.Services
 {
-    public class CoinGeckoService : ICoinGeckoService
+    public sealed class CoinGeckoService : ICoinGeckoService
     {
         private readonly HttpClient _http;
-        private readonly string _baseUrl;
-        private readonly string _apiKey;
         private readonly IRequestBuilder _requestBuilder;
 
-        public CoinGeckoService(IConfiguration config, HttpClient httpClient = null)
+        public CoinGeckoService(HttpClient http, IConfiguration cfg)
         {
-            _http = httpClient ?? new HttpClient();
-            _http.DefaultRequestHeaders.UserAgent.ParseAdd("CryptoTrackerApp/1.0");
-            _baseUrl = config["CoinGecko:BaseUrl"] ?? "https://api.coingecko.com/api/v3/";
-            _apiKey = config["CoinGecko:ApiKey"];
-            _requestBuilder = new CoinGeckoRequestBuilder(_baseUrl, _apiKey);
+            _http = http;
+
+            var baseUrl = cfg["CoinGecko:BaseUrl"] ?? "https://api.coingecko.com/api/v3/";
+            var apiKey = cfg["CoinGecko:ApiKey"] ?? string.Empty;
+
+            _requestBuilder = new CoinGeckoRequestBuilder(baseUrl, apiKey);
         }
 
+        #region Public API
         public async Task<IEnumerable<Currency>> GetTopCurrenciesAsync(int count)
         {
-            var url = _requestBuilder.BuildUrl($"coins/markets", new Dictionary<string, string>
+            var url = _requestBuilder.BuildUrl("coins/markets", new()
             {
                 ["vs_currency"] = "usd",
                 ["order"] = "market_cap_desc",
@@ -38,31 +38,28 @@ namespace CryptoTrackerApp.Services
                 ["sparkline"] = "false"
             });
 
-            var response = await ExecuteRequestAsync(url);
-
-            using var doc = JsonDocument.Parse(response);
-            var root = doc.RootElement;
+            var root = await GetJsonRootAsync(url);
             var list = new List<Currency>();
 
             foreach (var item in root.EnumerateArray())
             {
-                var c = new Currency
+                list.Add(new Currency
                 {
-                    Id = GetJsonPropertyString(item, "id"),
-                    Symbol = GetJsonPropertyString(item, "symbol"),
-                    Name = GetJsonPropertyString(item, "name"),
-                    CurrentPrice = GetJsonPropertyDecimal(item, "current_price"),
-                    MarketCap = GetJsonPropertyDecimal(item, "market_cap"),
-                    PriceChangePercentage24h = GetJsonPropertyDecimal(item, "price_change_percentage_24h")
-                };
-                list.Add(c);
+                    Id = item.GetProperty("id").GetString(),
+                    Symbol = item.GetProperty("symbol").GetString(),
+                    Name = item.GetProperty("name").GetString(),
+                    CurrentPrice = item.GetProperty("current_price").GetDecimal(),
+                    MarketCap = item.GetProperty("market_cap").GetDecimal(),
+                    PriceChangePercentage24h = item.GetProperty("price_change_percentage_24h").GetDecimal(),
+                    PriceChange24h = item.GetProperty("price_change_24h").GetDecimal()
+                });
             }
             return list;
         }
 
         public async Task<CurrencyDetails> GetCurrencyDetailsAsync(string coinId)
         {
-            var url = _requestBuilder.BuildUrl($"coins/{coinId}", new Dictionary<string, string>
+            var url = _requestBuilder.BuildUrl($"coins/{coinId}", new()
             {
                 ["localization"] = "false",
                 ["tickers"] = "false",
@@ -72,29 +69,25 @@ namespace CryptoTrackerApp.Services
                 ["sparkline"] = "false"
             });
 
-            var response = await ExecuteRequestAsync(url);
-
-            using var doc = JsonDocument.Parse(response);
-            var root = doc.RootElement;
+            var root = await GetJsonRootAsync(url);
+            var market = root.GetProperty("market_data");
 
             var details = new CurrencyDetails
             {
-                Id = GetJsonPropertyString(root, "id"),
-                Symbol = GetJsonPropertyString(root, "symbol"),
-                Name = GetJsonPropertyString(root, "name")
+                Id = root.GetProperty("id").GetString(),
+                Symbol = root.GetProperty("symbol").GetString(),
+                Name = root.GetProperty("name").GetString(),
+                CurrentPrice = GetNestedDecimal(market, "current_price", "usd"),
+                MarketCap = GetNestedDecimal(market, "market_cap", "usd"),
+                TotalVolume = GetNestedDecimal(market, "total_volume", "usd"),
+                PriceChangePercentage24h = GetNestedDecimal(market, "price_change_percentage_24h_in_currency", "usd"),
+                PriceChange24h = market.GetProperty("price_change_24h").GetDecimal()
             };
 
-            if (root.TryGetProperty("market_data", out var marketData))
+            if (root.TryGetProperty("description", out var desc) &&
+                desc.TryGetProperty("en", out var en))
             {
-                details.CurrentPrice = GetNestedJsonPropertyDecimal(marketData, "current_price", "usd");
-                details.MarketCap = GetNestedJsonPropertyDecimal(marketData, "market_cap", "usd");
-                details.TotalVolume = GetNestedJsonPropertyDecimal(marketData, "total_volume", "usd");
-                details.PriceChangePercentage24h = GetJsonPropertyDecimal(marketData, "price_change_percentage_24h");
-            }
-
-            if (root.TryGetProperty("description", out var desc) && desc.TryGetProperty("en", out var enDesc))
-            {
-                details.Description = enDesc.GetString();
+                details.Description = en.GetString();
             }
 
             return details;
@@ -102,31 +95,20 @@ namespace CryptoTrackerApp.Services
 
         public async Task<IEnumerable<Currency>> SearchCurrenciesAsync(string query)
         {
-            var url = _requestBuilder.BuildUrl("search", new Dictionary<string, string>
-            {
-                ["query"] = query
-            });
+            var url = _requestBuilder.BuildUrl("search", new() { ["query"] = query });
+            var root = await GetJsonRootAsync(url);
 
-            var response = await ExecuteRequestAsync(url);
-
-            using var doc = JsonDocument.Parse(response);
-            var root = doc.RootElement;
             var list = new List<Currency>();
-
-            if (root.TryGetProperty("coins", out var coinsElem))
+            if (root.TryGetProperty("coins", out var coins))
             {
-                foreach (var coinElem in coinsElem.EnumerateArray())
+                foreach (var c in coins.EnumerateArray())
                 {
-                    var c = new Currency
+                    list.Add(new Currency
                     {
-                        Id = GetJsonPropertyString(coinElem, "id"),
-                        Name = GetJsonPropertyString(coinElem, "name"),
-                        Symbol = GetJsonPropertyString(coinElem, "symbol"),
-                        CurrentPrice = 0,
-                        MarketCap = 0,
-                        PriceChangePercentage24h = 0
-                    };
-                    list.Add(c);
+                        Id = c.GetProperty("id").GetString(),
+                        Name = c.GetProperty("name").GetString(),
+                        Symbol = c.GetProperty("symbol").GetString()
+                    });
                 }
             }
             return list;
@@ -134,159 +116,77 @@ namespace CryptoTrackerApp.Services
 
         public async Task<List<DataPoint>> GetCoinMarketChartAsync(string coinId, int days)
         {
-            var url = _requestBuilder.BuildUrl($"coins/{coinId}/market_chart", new Dictionary<string, string>
+            var url = _requestBuilder.BuildUrl($"coins/{coinId}/market_chart", new()
             {
                 ["vs_currency"] = "usd",
                 ["days"] = days.ToString()
             });
 
-            var response = await ExecuteRequestAsync(url);
-
-            var dataPoints = new List<DataPoint>();
-            using var doc = JsonDocument.Parse(response);
-            var root = doc.RootElement;
+            var root = await GetJsonRootAsync(url);
+            var points = new List<DataPoint>();
 
             if (root.TryGetProperty("prices", out var prices))
             {
-                foreach (var item in prices.EnumerateArray())
+                foreach (var p in prices.EnumerateArray())
                 {
-                    if (item.GetArrayLength() >= 2)
-                    {
-                        var timestamp = item[0].GetDouble();
-                        var price = item[1].GetDouble();
-                        var dt = DateTimeOffset.FromUnixTimeMilliseconds((long)timestamp).DateTime;
-                        dataPoints.Add(new DataPoint(DateTimeAxis.ToDouble(dt), price));
-                    }
+                    var ts = p[0].GetDouble();
+                    var price = p[1].GetDouble();
+                    var dt = DateTimeOffset.FromUnixTimeMilliseconds((long)ts).UtcDateTime;
+                    points.Add(new DataPoint(DateTimeAxis.ToDouble(dt), price));
                 }
             }
-            return dataPoints;
+            return points;
         }
 
         public async Task<List<CandleStickPoint>> GetCoinOHLCAsync(string coinId, int days)
         {
-            var url = _requestBuilder.BuildUrl($"coins/{coinId}/ohlc", new Dictionary<string, string>
+            var url = _requestBuilder.BuildUrl($"coins/{coinId}/ohlc", new()
             {
                 ["vs_currency"] = "usd",
                 ["days"] = days.ToString()
             });
 
-            var response = await ExecuteRequestAsync(url);
+            var json = await _http.GetStringAsync(url);
+            var raw = JsonSerializer.Deserialize<List<List<double>>>(json);
 
-            var data = JsonSerializer.Deserialize<List<List<double>>>(response, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             var candles = new List<CandleStickPoint>();
-
-            if (data != null)
+            if (raw is { Count: > 0 })
             {
-                foreach (var arr in data)
+                foreach (var arr in raw)
                 {
-                    if (arr.Count >= 5)
-                    {
-                        var ts = (long)arr[0];
-                        var open = arr[1];
-                        var high = arr[2];
-                        var low = arr[3];
-                        var close = arr[4];
-                        var dt = DateTimeOffset.FromUnixTimeMilliseconds(ts).DateTime;
-                        var xVal = DateTimeAxis.ToDouble(dt);
-                        candles.Add(new CandleStickPoint(xVal, open, high, low, close));
-                    }
+                    var dt = DateTimeOffset.FromUnixTimeMilliseconds((long)arr[0]).UtcDateTime;
+                    candles.Add(new CandleStickPoint(
+                        DateTimeAxis.ToDouble(dt),
+                        arr[1], arr[2], arr[3], arr[4]));
                 }
             }
             return candles;
         }
+        #endregion
 
-        #region Helper Methods
-
-        private async Task<string> ExecuteRequestAsync(string url)
+        #region Helpers
+        private async Task<JsonElement> GetJsonRootAsync(string url)
         {
             try
             {
-                var response = await _http.GetAsync(url);
-                response.EnsureSuccessStatusCode();
-                return await response.Content.ReadAsStringAsync();
+                using var rsp = await _http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+                rsp.EnsureSuccessStatusCode();
+
+                await using var stream = await rsp.Content.ReadAsStreamAsync();
+                using var doc = await JsonDocument.ParseAsync(stream);
+                return doc.RootElement.Clone();
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"API Request failed: {ex.Message}");
                 throw new ApiException("Failed to retrieve data from CoinGecko API", ex);
             }
         }
 
-        private string GetJsonPropertyString(JsonElement element, string propertyName)
-        {
-            return element.TryGetProperty(propertyName, out var prop) ? prop.GetString() ?? string.Empty : string.Empty;
-        }
-
-        private decimal GetJsonPropertyDecimal(JsonElement element, string propertyName)
-        {
-            return element.TryGetProperty(propertyName, out var prop) && prop.ValueKind != JsonValueKind.Null ? prop.GetDecimal() : 0;
-        }
-
-        private decimal GetNestedJsonPropertyDecimal(JsonElement element, string property1, string property2)
-        {
-            if (element.TryGetProperty(property1, out var prop1) &&
-                prop1.TryGetProperty(property2, out var prop2) &&
-                prop2.ValueKind != JsonValueKind.Null)
-            {
-                return prop2.GetDecimal();
-            }
-            return 0;
-        }
-
+        private static decimal GetNestedDecimal(JsonElement root, string obj, string prop) =>
+            root.TryGetProperty(obj, out var o) &&
+            o.TryGetProperty(prop, out var p)
+                ? p.GetDecimal()
+                : 0m;
         #endregion
-    }
-    public interface IRequestBuilder
-    {
-        string BuildUrl(string endpoint, Dictionary<string, string> parameters = null);
-    }
-    public class CoinGeckoRequestBuilder : IRequestBuilder
-    {
-        private readonly string _baseUrl;
-        private readonly string _apiKey;
-
-        public CoinGeckoRequestBuilder(string baseUrl, string apiKey)
-        {
-            _baseUrl = baseUrl;
-            _apiKey = apiKey;
-        }
-
-        public string BuildUrl(string endpoint, Dictionary<string, string> parameters = null)
-        {
-            var sb = new StringBuilder();
-            sb.Append(_baseUrl);
-            if (_baseUrl.EndsWith("/") && endpoint.StartsWith("/"))
-                endpoint = endpoint.Substring(1);
-            else if (!_baseUrl.EndsWith("/") && !endpoint.StartsWith("/"))
-                sb.Append("/");
-
-            sb.Append(endpoint);
-            if (parameters != null && parameters.Count > 0)
-            {
-                sb.Append("?");
-                var isFirst = true;
-                foreach (var param in parameters)
-                {
-                    if (!isFirst)
-                        sb.Append("&");
-
-                    sb.Append($"{Uri.EscapeDataString(param.Key)}={Uri.EscapeDataString(param.Value)}");
-                    isFirst = false;
-                }
-            }
-            if (!string.IsNullOrEmpty(_apiKey))
-            {
-                sb.Append(parameters != null && parameters.Count > 0 ? "&" : "?");
-                sb.Append($"x_cg_demo_api_key={_apiKey}");
-            }
-
-            return sb.ToString();
-        }
-    }
-    public class ApiException : Exception
-    {
-        public ApiException(string message, Exception innerException = null)
-            : base(message, innerException)
-        {
-        }
     }
 }
