@@ -10,35 +10,31 @@ namespace CryptoTrackerApp.Views
         public MainView()
         {
             InitializeComponent();
-            this.DataContext = App.ServiceProvider.GetService<MainViewModel>();
+            DataContext = App.ServiceProvider.GetService<MainViewModel>();
         }
 
         private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (DataContext is MainViewModel vm && sender is ComboBox comboBox)
+            if (DataContext is MainViewModel vm && sender is ComboBox cb)
             {
-                vm.SelectedSortOption = comboBox.SelectedValue?.ToString() ?? "MarketCap";
-                vm.SortCurrenciesCommand.Execute(null);
+                vm.SelectedSortOption = cb.SelectedValue?.ToString() ?? "MarketCap";
+                vm.SortCurrencies();
             }
         }
 
         private void ListView_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             if (DataContext is MainViewModel vm)
-            {
-                vm.NavigateToDetailsCommand.Execute(null);
-            }
+                vm.NavigateToDetails();
         }
 
         private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if (sender is StackPanel stackPanel && DataContext is MainViewModel vm)
+            if (sender is TextBlock tb && DataContext is MainViewModel vm)
             {
-                string columnName = stackPanel.Tag?.ToString();
-                if (!string.IsNullOrEmpty(columnName))
-                {
-                    vm.SortByColumnCommand.Execute(columnName);
-                }
+                string column = tb.Tag?.ToString();
+                if (!string.IsNullOrEmpty(column))
+                    vm.SortByColumn(column);
             }
         }
     }
