@@ -5,12 +5,12 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/Themes/LightTheme.xaml" />
-                <!--<ResourceDictionary Source="/Themes/DarkTheme.xaml" />-->
+                <ResourceDictionary Source="/Themes/Light.xaml" />
+                <ResourceDictionary Source="/Themes/Dark.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <local:PercentageColorConverter x:Key="PercentageColorConverter" 
                 xmlns:local="clr-namespace:CryptoTrackerApp.Infrastructure"/>
-            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <BooleanToVisibilityConverter x:Key="BoolToVis"/>
             <infrastructure:BoolToRotationConverter x:Key="BoolToRotationConverter"/>
         </ResourceDictionary>
     </Application.Resources>
