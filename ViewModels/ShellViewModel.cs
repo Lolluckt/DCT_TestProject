@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CryptoTrackerApp.Infrastructure;
+using System;
 using System.Windows;
 
 namespace CryptoTrackerApp.ViewModels
@@ -12,8 +13,11 @@ namespace CryptoTrackerApp.ViewModels
 
         [ObservableProperty] private bool isDark;
 
-        [RelayCommand] public void NavigateHome() => CurrentNavService.NavigateTo("MainView");
-        [RelayCommand] public void GoBack() => CurrentNavService.GoBack();
+        [RelayCommand]
+        public void NavigateHome() => NavigateTo("MainView");
+
+        [RelayCommand]
+        public void GoBack() => base.GoBack();
 
         [RelayCommand]
         public void ToggleTheme()

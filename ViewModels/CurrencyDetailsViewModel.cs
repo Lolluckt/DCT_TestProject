@@ -6,7 +6,10 @@ using CryptoTrackerApp.Services;
 using OxyPlot;
 using OxyPlot.Axes;
 using OxyPlot.Series;
+using System;
+using System.Collections.ObjectModel;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace CryptoTrackerApp.ViewModels
 {
@@ -18,44 +21,63 @@ namespace CryptoTrackerApp.ViewModels
         [ObservableProperty] private PlotModel priceChart;
         [ObservableProperty] private bool isCandlestick;
 
+        public ObservableCollection<Ticker> Tickers { get; } = new();
+
         public CurrencyDetailsViewModel(ICoinGeckoService coinService)
         {
             _coinService = coinService;
             IsCandlestick = false;
         }
 
+        #region Computed properties
         public string DescriptionPlain =>
             string.IsNullOrWhiteSpace(Details?.Description)
                 ? "No description provided."
                 : Regex.Replace(Details.Description, "<.*?>", string.Empty).Trim();
-        [RelayCommand] public void GoBack() => ShellViewModel.CurrentNavService.GoBack();
+        #endregion
 
         [RelayCommand]
-        public async Task ToggleChartStyleAsync()
+        public void GoBack() => base.GoBack();
+
+        [RelayCommand]
+        private async Task ToggleChartStyleAsync()
         {
             if (Details == null) return;
             IsCandlestick = !IsCandlestick;
             await LoadChartAsync(Details.Id);
         }
+
+        [RelayCommand]
+        private void OpenTradeUrl(Ticker? ticker)
+        {
+            if (ticker == null || string.IsNullOrWhiteSpace(ticker.TradeUrl))
+                return;
+
+            OpenUrl(ticker.TradeUrl);
+        }
+
         public async void OnNavigatedTo(object parameter)
         {
             if (parameter is string coinId)
             {
-                try
+                await ExecuteWithLoadingAsync(async () =>
                 {
                     Details = await _coinService.GetCurrencyDetailsAsync(coinId);
                     OnPropertyChanged(nameof(DescriptionPlain));
+
                     await LoadChartAsync(coinId);
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine("Navigation error: " + ex.Message);
-                }
+
+                    Tickers.Clear();
+                    var tickers = await _coinService.GetCoinTickersAsync(coinId, Details.Symbol);
+                    foreach (var t in tickers)
+                        Tickers.Add(t);
+                }, $"Loading {coinId} details...");
             }
         }
+
         private async Task LoadChartAsync(string coinId)
         {
-            try
+            await ExecuteWithLoadingAsync(async () =>
             {
                 PlotModel model;
 
@@ -113,13 +135,10 @@ namespace CryptoTrackerApp.ViewModels
 
                     model.Series.Add(series);
                 }
+
                 PriceChart = model;
                 PriceChart.InvalidatePlot(true);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine("Plot error: " + ex.Message);
-            }
+            }, "Loading chart data...");
         }
     }
 }
