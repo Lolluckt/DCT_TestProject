@@ -3,16 +3,77 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Crypto Tracker" Width="1150" Height="740" WindowStartupLocation="CenterScreen">
 
-    <DockPanel>
-        <StackPanel DockPanel.Dock="Left" Width="180" Background="{DynamicResource CardBrush}">
-            <TextBlock Text="Crypto Tracker" FontWeight="Bold" FontSize="20" Margin="16 20"/>
+    <Window.Resources>
+        <Style x:Key="ModernMenuButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#9AA1B0"/>
+            <Setter Property="Height" Value="50"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Padding" Value="20,0,0,0"/>
+            <Setter Property="Margin" Value="0,2"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" 
+                                BorderThickness="0" CornerRadius="0,25,25,0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border x:Name="indicator" Width="3" HorizontalAlignment="Left" 
+                                        Background="#4A88F5" Visibility="Collapsed"/>
+                                <ContentPresenter Grid.Column="1" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
+                                                  VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#F0F4FF"/>
+                                <Setter Property="Foreground" Value="#4A88F5"/>
+                                <Setter TargetName="indicator" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#E5EDFF"/>
+                                <Setter Property="Foreground" Value="#2D6AD2"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
 
-            <Button Content="🏠  Home" Command="{Binding NavigateHomeCommand}"/>
-            <Button Content="⬅  Back" Command="{Binding GoBackCommand}"/>
-            <Button Content="{Binding IsDark, StringFormat={}{0:☀  Light|🌙  Dark}}"
-                    Command="{Binding ToggleThemeCommand}"/>
-        </StackPanel>
+    <Border Background="#F5F7FA">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="240"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
-        <Frame x:Name="MainFrame" NavigationUIVisibility="Hidden"/>
-    </DockPanel>
+            <Border Grid.Column="0" Background="White" CornerRadius="0,20,20,0" Margin="0,15,0,15">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Top" Margin="0,30,0,40">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Ellipse Width="40" Height="40" Fill="#4A88F5" Margin="0,0,10,0"/>
+                            <TextBlock Text="Crypto Tracker" FontWeight="Bold" FontSize="22" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel>
+                        <Button Content="🏠  Dashboard" Style="{StaticResource ModernMenuButton}" 
+                                Command="{Binding NavigateHomeCommand}"/>
+                        <Button Content="📊  Converter" Style="{StaticResource ModernMenuButton}"/>
+                        <Button Content="⬅️  Back" Style="{StaticResource ModernMenuButton}" 
+                                Command="{Binding GoBackCommand}"/>
+                        <Button Content="{Binding IsDark, StringFormat={}{0:☀️  Light Mode|🌙  Dark Mode}}" 
+                                Style="{StaticResource ModernMenuButton}"
+                                Command="{Binding ToggleThemeCommand}"/>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+            <Frame x:Name="MainFrame" Grid.Column="1" NavigationUIVisibility="Hidden" Margin="15,15,15,15"/>
+        </Grid>
+    </Border>
 </Window>

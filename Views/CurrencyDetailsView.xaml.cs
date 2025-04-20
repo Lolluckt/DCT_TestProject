@@ -1,8 +1,8 @@
-﻿using System.Windows;
-using System.Windows.Controls;
-using CryptoTrackerApp.ViewModels;
+﻿using CryptoTrackerApp.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
-using OxyPlot.Wpf;
+using System.Diagnostics;
+using System.Windows.Controls;
+using System.Windows.Navigation;
 
 namespace CryptoTrackerApp.Views
 {
@@ -11,16 +11,14 @@ namespace CryptoTrackerApp.Views
         public CurrencyDetailsView()
         {
             InitializeComponent();
-            this.DataContext = App.ServiceProvider.GetService<CurrencyDetailsViewModel>();
-            this.Unloaded += CurrencyDetailsView_Unloaded;
+            DataContext = App.ServiceProvider.GetService<CurrencyDetailsViewModel>();
+            Unloaded += (s, e) => { if (PlotView != null) PlotView.Model = null; };
         }
 
-        private void CurrencyDetailsView_Unloaded(object sender, RoutedEventArgs e)
+        private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
         {
-            if (PlotView != null)
-            {
-                PlotView.Model = null;
-            }
+            Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true });
+            e.Handled = true;
         }
     }
 }

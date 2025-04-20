@@ -7,112 +7,144 @@
     <Page.Resources>
         <inf:PercentageColorConverter x:Key="PercentColor"/>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <inf:StringToFirstLetterConverter x:Key="StringToFirstLetterConverter"/>
+        <Style x:Key="CurrencyCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Margin" Value="0,5,0,5"/>
+            <Setter Property="Padding" Value="15"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect ShadowDepth="1" BlurRadius="5" Opacity="0.1" Color="#000000"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ModernButton" TargetType="Button">
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Background" Value="#4A88F5"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#2D6AD2"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="SortComboBoxStyle" TargetType="ComboBox">
+            <Setter Property="Background" Value="#F5F7FA"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Width" Value="140"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
     </Page.Resources>
 
-    <Grid>
+    <Grid Background="#F5F7FA">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <DockPanel Margin="12">
-            <TextBox Width="220" Text="{Binding SearchQuery,UpdateSourceTrigger=PropertyChanged}" />
 
-            <Button Content="Search"
-                    Command="{Binding SearchCurrenciesCommand}"
-                    DockPanel.Dock="Left"/>
+        <Border Grid.Row="0" Background="White" Padding="20" Margin="15,15,15,0" CornerRadius="10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
-            <ComboBox Width="140"
-                      ItemsSource="{Binding SortOptions}" 
-                      SelectedItem="{Binding SelectedSortOption}"
-                      SelectionChanged="ComboBox_SelectionChanged"
-                      DockPanel.Dock="Left"/>
+                <Border Grid.Column="0" Width="220" Height="38" Background="#F5F7FA" CornerRadius="8" Padding="10,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="🔍" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBox Grid.Column="1" Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}"
+                                 VerticalAlignment="Center" BorderThickness="0" Background="Transparent" Padding="0"/>
+                    </Grid>
+                </Border>
 
-            <ProgressBar Width="90" Height="6" VerticalAlignment="Center"
-                         Visibility="{Binding IsLoading,Converter={StaticResource BoolToVis}}"
-                         IsIndeterminate="True"
-                         DockPanel.Dock="Left"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center">
+                    <Button Content="Search" Style="{StaticResource ModernButton}" Command="{Binding SearchCurrenciesCommand}" Margin="10,0"/>
 
-            <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Margin="12 0"/>
-        </DockPanel>
-        <Border Grid.Row="1" Margin="12" Padding="12" Background="{DynamicResource CardBrush}" CornerRadius="6">
-            <ListView ItemsSource="{Binding Currencies}"
-                      SelectedItem="{Binding SelectedCurrency}"
-                      MouseLeftButtonUp="ListView_MouseLeftButtonUp"
-                      BorderThickness="0">
+                    <Border Background="#F5F7FA" CornerRadius="8" Margin="10,0" Height="38">
+                        <ComboBox
+                            ItemsSource="{Binding SortOptions}"
+                            SelectedItem="{Binding SelectedSortOption, Mode=TwoWay}"
+                            Style="{StaticResource SortComboBoxStyle}" />
+                    </Border>
 
-                <ListView.View>
-                    <GridView>
+                    <ProgressBar Width="90" Height="6" VerticalAlignment="Center"
+                                 Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}"
+                                 IsIndeterminate="True" Margin="10,0" Foreground="#4A88F5"/>
+                </StackPanel>
 
-                        <GridViewColumn Header="Name">
-                            <GridViewColumn.HeaderTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="Name" Tag="Name"
-                                               MouseLeftButtonDown="Header_MouseLeftButtonDown"/>
-                                </DataTemplate>
-                            </GridViewColumn.HeaderTemplate>
-                            <GridViewColumn.CellTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding Name}"/>
-                                </DataTemplate>
-                            </GridViewColumn.CellTemplate>
-                        </GridViewColumn>
-
-                        <GridViewColumn Header="Price">
-                            <GridViewColumn.HeaderTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="Price" Tag="Price"
-                                               MouseLeftButtonDown="Header_MouseLeftButtonDown"/>
-                                </DataTemplate>
-                            </GridViewColumn.HeaderTemplate>
-                            <GridViewColumn.DisplayMemberBinding>
-                                <Binding Path="CurrentPrice" StringFormat='{}{0:C}'/>
-                            </GridViewColumn.DisplayMemberBinding>
-                        </GridViewColumn>
-
-                        <GridViewColumn Header="Δ 24h $">
-                            <GridViewColumn.HeaderTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="Δ 24h $" Tag="Change24h"
-                                               MouseLeftButtonDown="Header_MouseLeftButtonDown"/>
-                                </DataTemplate>
-                            </GridViewColumn.HeaderTemplate>
-                            <GridViewColumn.DisplayMemberBinding>
-                                <Binding Path="PriceChange24h" StringFormat='{}{0:+0.##;-0.##;0}'/>
-                            </GridViewColumn.DisplayMemberBinding>
-                        </GridViewColumn>
-
-                        <GridViewColumn Header="Δ 24h %">
-                            <GridViewColumn.HeaderTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="Δ 24h %" Tag="Change24hPct"
-                                               MouseLeftButtonDown="Header_MouseLeftButtonDown"/>
-                                </DataTemplate>
-                            </GridViewColumn.HeaderTemplate>
-                            <GridViewColumn.CellTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding PriceChangePercentage24h,
-                                                              StringFormat='{}{0:+0.##;-0.##;0}%'}"
-                                               Foreground="{Binding PriceChangePercentage24h,
-                                                                    Converter={StaticResource PercentColor}}"/>
-                                </DataTemplate>
-                            </GridViewColumn.CellTemplate>
-                        </GridViewColumn>
-
-                        <GridViewColumn Header="MarketCap">
-                            <GridViewColumn.HeaderTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="MarketCap" Tag="MarketCap"
-                                               MouseLeftButtonDown="Header_MouseLeftButtonDown"/>
-                                </DataTemplate>
-                            </GridViewColumn.HeaderTemplate>
-                            <GridViewColumn.DisplayMemberBinding>
-                                <Binding Path="MarketCap" StringFormat='{}{0:#,##0}'/>
-                            </GridViewColumn.DisplayMemberBinding>
-                        </GridViewColumn>
-
-                    </GridView>
-                </ListView.View>
-            </ListView>
+                <TextBlock Grid.Column="2" Text="{Binding StatusMessage}" VerticalAlignment="Center" Margin="12,0"/>
+            </Grid>
         </Border>
+
+        <ScrollViewer Grid.Row="1" Margin="15" VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding CurrenciesView}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource CurrencyCardStyle}"
+                                MouseLeftButtonUp="Currency_MouseLeftButtonUp"
+                                Tag="{Binding}">
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Border Grid.Column="0" Width="36" Height="36" CornerRadius="18" Background="#F0F4FF" Margin="0,0,12,0">
+                                    <TextBlock Text="{Binding Name, Converter={StaticResource StringToFirstLetterConverter}}"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               FontWeight="Bold" Foreground="#4A88F5"/>
+                                </Border>
+
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14"/>
+                                    <TextBlock Text="{Binding Symbol}" Foreground="#9AA1B0" FontSize="12" Margin="0,2,0,0"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2" Margin="10,0" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                    <TextBlock Text="{Binding CurrentPrice, StringFormat={}{0:C}}"
+                                               FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                                    <TextBlock Text="{Binding PriceChange24h, StringFormat={}{0:+0.##;-0.##;0}}"
+                                               Foreground="{Binding PriceChange24h, Converter={StaticResource PercentColor}}"
+                                               FontSize="12" Margin="0,2,0,0" HorizontalAlignment="Right"/>
+                                </StackPanel>
+
+                                <Border Grid.Column="3" Margin="8,0,0,0" Height="26" CornerRadius="13" Padding="10,0"
+                                        Background="{Binding PriceChangePercentage24h, Converter={StaticResource PercentColor}, ConverterParameter=Background}"
+                                        VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding PriceChangePercentage24h, StringFormat={}{0:+0.##;-0.##;0}%}"
+                                               Foreground="White" FontSize="12" VerticalAlignment="Center"/>
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
     </Grid>
 </Page>
