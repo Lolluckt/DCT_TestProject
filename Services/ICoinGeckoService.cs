@@ -12,5 +12,6 @@ namespace CryptoTrackerApp.Services
         Task<IEnumerable<Currency>> SearchCurrenciesAsync(string query);
         Task<List<DataPoint>> GetCoinMarketChartAsync(string coinId, int days);
         Task<List<CandleStickPoint>> GetCoinOHLCAsync(string coinId, int days);
+        Task<IEnumerable<Ticker>> GetCoinTickersAsync(string coinId, string baseSymbol);
     }
 }

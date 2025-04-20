@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Text.Json;
-using System.Threading.Tasks;
 using CryptoTrackerApp.Infrastructure.Http;
 using CryptoTrackerApp.Models;
 using Microsoft.Extensions.Configuration;
@@ -26,7 +23,7 @@ namespace CryptoTrackerApp.Services
             _requestBuilder = new CoinGeckoRequestBuilder(baseUrl, apiKey);
         }
 
-        #region Public API
+        #region ── Public API 
         public async Task<IEnumerable<Currency>> GetTopCurrenciesAsync(int count)
         {
             var url = _requestBuilder.BuildUrl("coins/markets", new()
@@ -80,7 +77,7 @@ namespace CryptoTrackerApp.Services
                 CurrentPrice = GetNestedDecimal(market, "current_price", "usd"),
                 MarketCap = GetNestedDecimal(market, "market_cap", "usd"),
                 TotalVolume = GetNestedDecimal(market, "total_volume", "usd"),
-                PriceChangePercentage24h = GetNestedDecimal(market, "price_change_percentage_24h_in_currency", "usd"),
+                PriceChangePercentage24h = market.GetProperty("price_change_percentage_24h").GetDecimal(),
                 PriceChange24h = market.GetProperty("price_change_24h").GetDecimal()
             };
 
@@ -89,30 +86,74 @@ namespace CryptoTrackerApp.Services
             {
                 details.Description = en.GetString();
             }
-
             return details;
         }
 
         public async Task<IEnumerable<Currency>> SearchCurrenciesAsync(string query)
         {
-            var url = _requestBuilder.BuildUrl("search", new() { ["query"] = query });
-            var root = await GetJsonRootAsync(url);
+            var searchUrl = _requestBuilder.BuildUrl("search", new() { ["query"] = query });
+            var searchRoot = await GetJsonRootAsync(searchUrl);
+            var ids = new List<string>();
 
-            var list = new List<Currency>();
-            if (root.TryGetProperty("coins", out var coins))
+            if (searchRoot.TryGetProperty("coins", out var coins))
             {
                 foreach (var c in coins.EnumerateArray())
                 {
-                    list.Add(new Currency
+                    if (c.TryGetProperty("id", out var idProp) && idProp.ValueKind == JsonValueKind.String)
                     {
-                        Id = c.GetProperty("id").GetString(),
-                        Name = c.GetProperty("name").GetString(),
-                        Symbol = c.GetProperty("symbol").GetString()
-                    });
+                        var id = idProp.GetString();
+                        if (!string.IsNullOrEmpty(id))
+                            ids.Add(id);
+                    }
                 }
             }
-            return list;
+            if (ids.Count == 0)
+                return Array.Empty<Currency>();
+
+            var marketsUrl = _requestBuilder.BuildUrl("coins/markets", new()
+            {
+                ["vs_currency"] = "usd",
+                ["ids"] = string.Join(",", ids),
+                ["order"] = "market_cap_desc",
+                ["sparkline"] = "false"
+            });
+            var marketsRoot = await GetJsonRootAsync(marketsUrl);
+
+            var result = new List<Currency>();
+            foreach (var item in marketsRoot.EnumerateArray())
+            {
+                decimal currentPrice = 0m;
+                if (item.TryGetProperty("current_price", out var cp) && cp.ValueKind == JsonValueKind.Number)
+                    currentPrice = cp.GetDecimal();
+
+                decimal marketCap = 0m;
+                if (item.TryGetProperty("market_cap", out var mc) && mc.ValueKind == JsonValueKind.Number)
+                    marketCap = mc.GetDecimal();
+
+                decimal priceChange24h = 0m;
+                if (item.TryGetProperty("price_change_24h", out var pc) && pc.ValueKind == JsonValueKind.Number)
+                    priceChange24h = pc.GetDecimal();
+
+                decimal priceChangePct = 0m;
+                if (item.TryGetProperty("price_change_percentage_24h", out var pcp) && pcp.ValueKind == JsonValueKind.Number)
+                    priceChangePct = pcp.GetDecimal();
+
+                result.Add(new Currency
+                {
+                    Id = item.GetProperty("id").GetString(),
+                    Symbol = item.GetProperty("symbol").GetString(),
+                    Name = item.GetProperty("name").GetString(),
+                    CurrentPrice = currentPrice,
+                    MarketCap = marketCap,
+                    PriceChange24h = priceChange24h,
+                    PriceChangePercentage24h = priceChangePct
+                });
+            }
+
+            return result;
         }
+
+
 
         public async Task<List<DataPoint>> GetCoinMarketChartAsync(string coinId, int days)
         {
@@ -161,6 +202,46 @@ namespace CryptoTrackerApp.Services
                 }
             }
             return candles;
+        }
+
+        public async Task<IEnumerable<Ticker>> GetCoinTickersAsync(string coinId, string baseSymbol)
+        {
+            var url = _requestBuilder.BuildUrl($"coins/{coinId}/tickers", new()
+            {
+                ["page"] = "1",
+                ["per_page"] = "100"
+            });
+
+            var root = await GetJsonRootAsync(url);
+            var list = new List<Ticker>();
+
+            if (root.TryGetProperty("tickers", out var arr))
+            {
+                foreach (var item in arr.EnumerateArray())
+                {
+                    var baseSym = item.GetProperty("base").GetString();
+                    if (!string.Equals(baseSym, baseSymbol, StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    var target = item.GetProperty("target").GetString();
+                    var marketName = item.GetProperty("market").GetProperty("name").GetString() ?? string.Empty;
+                    decimal lastUsd = 0m;
+                    if (item.TryGetProperty("converted_last", out var conv) && conv.TryGetProperty("usd", out var usd))
+                        lastUsd = usd.GetDecimal();
+
+                    var tradeUrl = item.GetProperty("trade_url").GetString() ?? string.Empty;
+
+                    list.Add(new Ticker
+                    {
+                        MarketName = marketName,
+                        Base = baseSym ?? string.Empty,
+                        Target = target ?? string.Empty,
+                        LastPriceUsd = lastUsd,
+                        TradeUrl = tradeUrl
+                    });
+                }
+            }
+            return list;
         }
         #endregion
 
