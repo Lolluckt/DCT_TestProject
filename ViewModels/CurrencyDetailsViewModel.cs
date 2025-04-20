@@ -6,10 +6,10 @@ using CryptoTrackerApp.Services;
 using OxyPlot;
 using OxyPlot.Axes;
 using OxyPlot.Series;
-using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+using System.Windows.Data;
 
 namespace CryptoTrackerApp.ViewModels
 {
@@ -20,13 +20,17 @@ namespace CryptoTrackerApp.ViewModels
         [ObservableProperty] private CurrencyDetails details;
         [ObservableProperty] private PlotModel priceChart;
         [ObservableProperty] private bool isCandlestick;
+        [ObservableProperty] private bool isAscendingSort;
 
         public ObservableCollection<Ticker> Tickers { get; } = new();
+        public ICollectionView TickersView { get; }
 
         public CurrencyDetailsViewModel(ICoinGeckoService coinService)
         {
             _coinService = coinService;
             IsCandlestick = false;
+            IsAscendingSort = true;
+            TickersView = CollectionViewSource.GetDefaultView(Tickers);
         }
 
         #region Computed properties
@@ -34,6 +38,8 @@ namespace CryptoTrackerApp.ViewModels
             string.IsNullOrWhiteSpace(Details?.Description)
                 ? "No description provided."
                 : Regex.Replace(Details.Description, "<.*?>", string.Empty).Trim();
+
+        public string SortButtonText => IsAscendingSort ? "Price ▲" : "Price ▼";
         #endregion
 
         [RelayCommand]
@@ -56,6 +62,23 @@ namespace CryptoTrackerApp.ViewModels
             OpenUrl(ticker.TradeUrl);
         }
 
+        [RelayCommand]
+        private void SortTickersByPrice()
+        {
+            IsAscendingSort = !IsAscendingSort;
+            OnPropertyChanged(nameof(SortButtonText));
+
+            TickersView.SortDescriptions.Clear();
+            var direction = IsAscendingSort
+                ? ListSortDirection.Ascending
+                : ListSortDirection.Descending;
+
+            TickersView.SortDescriptions.Add(
+                new SortDescription(nameof(Ticker.LastPriceUsd), direction));
+
+            TickersView.Refresh();
+        }
+
         public async void OnNavigatedTo(object parameter)
         {
             if (parameter is string coinId)
@@ -71,6 +94,8 @@ namespace CryptoTrackerApp.ViewModels
                     var tickers = await _coinService.GetCoinTickersAsync(coinId, Details.Symbol);
                     foreach (var t in tickers)
                         Tickers.Add(t);
+
+                    SortTickersByPrice();
                 }, $"Loading {coinId} details...");
             }
         }

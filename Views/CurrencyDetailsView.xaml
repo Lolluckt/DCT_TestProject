@@ -40,6 +40,29 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <Style x:Key="SortButtonStyle" TargetType="Button" BasedOn="{StaticResource TradeButtonStyle}">
+            <Setter Property="Background" Value="#2ecc71"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="4" 
+                                Padding="8,4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#27ae60"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#219653"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Page.Resources>
 
     <ScrollViewer>
@@ -60,7 +83,7 @@
                                HorizontalAlignment="Center" 
                                VerticalAlignment="Center"/>
                 </Border>
-                
+
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                     <TextBlock Text="{Binding Details.Name}" FontSize="24" FontWeight="Bold"/>
                     <TextBlock Text="{Binding Details.Symbol}" FontSize="14" Foreground="#777"/>
@@ -143,7 +166,20 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <TextBlock Text="Markets" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                <Grid Grid.Row="0" Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0" Text="Markets" FontSize="18" FontWeight="SemiBold"/>
+                    <Button Grid.Column="2" 
+                            Content="{Binding SortButtonText}" 
+                            Command="{Binding SortTickersByPriceCommand}"
+                            Width="100" Height="32"
+                            Style="{StaticResource SortButtonStyle}"/>
+                </Grid>
 
                 <Border Grid.Row="1" Background="White" CornerRadius="8" Effect="{StaticResource ShadowEffect}" Padding="0">
                     <Grid>
@@ -169,7 +205,7 @@
                         </Grid>
 
                         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" MaxHeight="320">
-                            <ItemsControl ItemsSource="{Binding Tickers}">
+                            <ItemsControl ItemsSource="{Binding TickersView}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Border BorderThickness="0,0,0,1" BorderBrush="#EEF0F2">
