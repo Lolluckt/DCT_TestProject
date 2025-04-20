@@ -1,5 +1,8 @@
-﻿using CryptoTrackerApp.Infrastructure;
+﻿
+using CryptoTrackerApp.Infrastructure;
+using CryptoTrackerApp.Infrastructure.Http;
 using CryptoTrackerApp.Services;
+using CryptoTrackerApp.Services.Mappers;
 using CryptoTrackerApp.ViewModels;
 using CryptoTrackerApp.Views;
 using Microsoft.Extensions.Configuration;
@@ -23,7 +26,11 @@ namespace CryptoTrackerApp.Infrastructure
                 return c;
             });
 
+            services.AddSingleton<IApiClient, CoinGeckoApiClient>();
+            services.AddSingleton<ICurrencyMapper, CoinGeckoCurrencyMapper>();
+            services.AddSingleton<IChartMapper, OxyPlotChartMapper>();
             services.AddTransient<ICoinGeckoService, CoinGeckoService>();
+
             services.AddSingleton<ShellViewModel>();
             services.AddSingleton<MainViewModel>();
             services.AddSingleton<CurrencyDetailsViewModel>();
