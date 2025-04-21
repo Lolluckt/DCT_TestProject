@@ -30,6 +30,7 @@ namespace CryptoTrackerApp.Infrastructure
             services.AddSingleton<ICurrencyMapper, CoinGeckoCurrencyMapper>();
             services.AddSingleton<IChartMapper, OxyPlotChartMapper>();
             services.AddTransient<ICoinGeckoService, CoinGeckoService>();
+            services.AddTransient<ConverterViewModel>();
 
             services.AddSingleton<ShellViewModel>();
             services.AddSingleton<MainViewModel>();
@@ -37,6 +38,7 @@ namespace CryptoTrackerApp.Infrastructure
             services.AddSingleton<ShellView>();
             services.AddTransient<MainView>();
             services.AddTransient<CurrencyDetailsView>();
+            services.AddTransient<ConverterView>();
 
             return services.BuildServiceProvider();
         }
