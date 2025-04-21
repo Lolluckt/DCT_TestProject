@@ -20,6 +20,7 @@ namespace CryptoTrackerApp.Infrastructure
             {
                 "MainView" => App.ServiceProvider.GetService<MainView>(),
                 "CurrencyDetailsView" => App.ServiceProvider.GetService<CurrencyDetailsView>(),
+                "ConverterView" => App.ServiceProvider.GetService<ConverterView>(),
                 _ => throw new ArgumentException($"Unknown page '{pageName}'"),
             };
 
@@ -30,6 +31,7 @@ namespace CryptoTrackerApp.Infrastructure
 
             _frame.Navigate(page);
         }
+
 
         public void GoBack()
         {
