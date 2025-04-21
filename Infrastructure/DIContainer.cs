@@ -1,6 +1,4 @@
-﻿
-using CryptoTrackerApp.Infrastructure;
-using CryptoTrackerApp.Infrastructure.Http;
+﻿using CryptoTrackerApp.Infrastructure.Http;
 using CryptoTrackerApp.Services;
 using CryptoTrackerApp.Services.Mappers;
 using CryptoTrackerApp.ViewModels;
