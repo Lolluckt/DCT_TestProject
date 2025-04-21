@@ -62,6 +62,38 @@ namespace CryptoTrackerApp.ViewModels
             }, "Loading top currencies...", $"Loaded {Currencies.Count} currencies");
         }
 
+
+        [RelayCommand]
+        public async Task RefreshCurrenciesAsync()
+        {
+            bool isSearch = !string.IsNullOrWhiteSpace(SearchQuery);
+
+            if (!isSearch)
+            {
+                int count = Currencies.Count > 0 ? Currencies.Count : 10;
+                await ExecuteWithLoadingAsync(async () =>
+                {
+                    Currencies.Clear();
+                    foreach (var c in await _coinService.GetTopCurrenciesAsync(count))
+                        Currencies.Add(c);
+                },
+                loadingMessage: "Refreshing top currencies…",
+                successMessage: $"Loaded {Currencies.Count} currencies");
+            }
+            else
+            {
+                await ExecuteWithLoadingAsync(async () =>
+                {
+                    Currencies.Clear();
+                    foreach (var c in await _coinService.SearchCurrenciesAsync(SearchQuery))
+                        Currencies.Add(c);
+                },
+                loadingMessage: $"Refreshing search for '{SearchQuery}'…",
+                successMessage: $"Found {Currencies.Count} results");
+            }
+        }
+
+
         [RelayCommand]
         public async Task SearchCurrenciesAsync()
         {

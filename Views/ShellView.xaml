@@ -64,7 +64,8 @@
                     <StackPanel>
                         <Button Content="🏠  Dashboard" Style="{StaticResource ModernMenuButton}" 
                                 Command="{Binding NavigateHomeCommand}"/>
-                        <Button Content="📊  Converter" Style="{StaticResource ModernMenuButton}"/>
+                        <Button Content="📊  Converter" Style="{StaticResource ModernMenuButton}"
+                                Command="{Binding NavigateToConverterCommand}"/>
                         <Button Content="⬅️  Back" Style="{StaticResource ModernMenuButton}" 
                                 Command="{Binding GoBackCommand}"/>
                         <Button Content="{Binding IsDark, StringFormat={}{0:☀️  Light Mode|🌙  Dark Mode}}" 

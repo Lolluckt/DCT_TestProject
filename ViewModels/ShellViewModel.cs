@@ -20,6 +20,9 @@ namespace CryptoTrackerApp.ViewModels
         public void GoBack() => base.GoBack();
 
         [RelayCommand]
+        public void NavigateToConverter() => NavigateTo("ConverterView");
+
+        [RelayCommand]
         public void ToggleTheme()
         {
             IsDark = !IsDark;
