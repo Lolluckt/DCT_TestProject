@@ -3,7 +3,7 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:oxy="clr-namespace:OxyPlot.Wpf;assembly=OxyPlot.Wpf"
       xmlns:conv="clr-namespace:CryptoTrackerApp.Infrastructure"
-      xmlns:inf="clr-namespace:CryptoTrackerApp.Infrastructure"
+      Background="{DynamicResource WindowBrush}"
       Title="Currency Details">
 
     <Page.Resources>
@@ -12,10 +12,15 @@
         <conv:BoolToRotationConverter x:Key="RotationConverter"/>
         <conv:CurrencyColorConverter x:Key="CurrencyColorConverter"/>
 
-        <DropShadowEffect x:Key="ShadowEffect" ShadowDepth="2" BlurRadius="8" Opacity="0.2" Color="#000000"/>
+        <DropShadowEffect x:Key="ShadowEffect"
+                          ShadowDepth="2"
+                          BlurRadius="8"
+                          Opacity="0.2"
+                          Color="{DynamicResource ShadowClr}"/>
+
         <Style x:Key="TradeButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#3498db"/>
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource FontBrush}"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="12"/>
@@ -23,49 +28,72 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" 
-                                CornerRadius="4" 
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="4"
                                 Padding="8,4">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#2980b9"/>
+                                <Setter Property="Background" Value="{DynamicResource AccentDarkBrush}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Background" Value="#1c6ea4"/>
+                                <Setter Property="Background" Value="{DynamicResource PressedBrush}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
-
         <Style x:Key="SortButtonStyle" TargetType="Button" BasedOn="{StaticResource TradeButtonStyle}">
-            <Setter Property="Background" Value="#2ecc71"/>
+            <Setter Property="Background" Value="{DynamicResource PositiveBrush}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" 
-                                CornerRadius="4" 
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="4"
                                 Padding="8,4">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#27ae60"/>
+                                <Setter Property="Background" Value="{DynamicResource AccentDarkBrush}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Background" Value="#219653"/>
+                                <Setter Property="Background" Value="{DynamicResource PressedBrush}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="SelectableTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="IsUndoEnabled" Value="False"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Foreground" Value="{DynamicResource FontBrush}"/>
+            <Setter Property="Cursor" Value="IBeam"/>
+            <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}">
+                            <ScrollViewer x:Name="PART_ContentHost" 
+                                         SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                        </Border>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
     </Page.Resources>
 
-    <ScrollViewer>
+    <ScrollViewer Background="Transparent">
         <StackPanel Margin="20">
             <Grid Margin="0,0,0,20">
                 <Grid.ColumnDefinitions>
@@ -74,29 +102,40 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <Border Grid.Column="0" Width="48" Height="48" CornerRadius="24" Margin="0,0,16,0"
+                <Border Grid.Column="0"
+                        Width="48" Height="48"
+                        CornerRadius="24"
+                        Margin="0,0,16,0"
                         Background="{Binding Details.Symbol, Converter={StaticResource CurrencyColorConverter}}">
-                    <TextBlock Text="{Binding Details.Symbol, Converter={StaticResource InitialsConverter}}" 
-                               FontWeight="Bold" 
+                    <TextBlock Text="{Binding Details.Symbol, Converter={StaticResource InitialsConverter}}"
+                               FontWeight="Bold"
                                FontSize="18"
-                               Foreground="White" 
-                               HorizontalAlignment="Center" 
+                               Foreground="{DynamicResource CardBrush}"
+                               HorizontalAlignment="Center"
                                VerticalAlignment="Center"/>
                 </Border>
 
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding Details.Name}" FontSize="24" FontWeight="Bold"/>
-                    <TextBlock Text="{Binding Details.Symbol}" FontSize="14" Foreground="#777"/>
+                    <TextBlock Text="{Binding Details.Name}"
+                               FontSize="24"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource FontBrush}"/>
+                    <TextBlock Text="{Binding Details.Symbol}"
+                               FontSize="14"
+                               Foreground="{DynamicResource SubtleFontBrush}"/>
                 </StackPanel>
 
-                <Button Grid.Column="2" Content="Back" 
-                        Command="{Binding GoBackCommand}" 
+                <Button Grid.Column="2"
+                        Content="Back"
+                        Command="{Binding GoBackCommand}"
                         Width="80" Height="32"
                         Style="{StaticResource TradeButtonStyle}"/>
             </Grid>
-
-            <Border Background="White" CornerRadius="8" Padding="16" Margin="0,0,0,20"
-                    Effect="{StaticResource ShadowEffect}">
+            <Border Background="{DynamicResource CardBrush}"
+        CornerRadius="8"
+        Padding="16"
+        Margin="0,0,0,20"
+        Effect="{StaticResource ShadowEffect}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -104,42 +143,85 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-
                     <StackPanel Grid.Column="0">
-                        <TextBlock Text="Current Price" FontWeight="Medium" Foreground="#777" Margin="0,0,0,4"/>
-                        <TextBlock Text="{Binding Details.CurrentPrice, StringFormat=C}" FontSize="20" FontWeight="SemiBold"/>
+                        <TextBlock Text="Current Price"
+                       FontWeight="Medium"
+                       Foreground="{DynamicResource SubtleFontBrush}"
+                       Margin="0,0,0,4"/>
+                        <TextBox Text="{Binding Details.CurrentPrice, StringFormat=C, Mode=OneWay}"
+                     FontSize="20"
+                     FontWeight="SemiBold"
+                     Foreground="{DynamicResource FontBrush}"
+                     Style="{StaticResource SelectableTextBoxStyle}"
+                     Padding="0"
+                     Background="Transparent"
+                     BorderThickness="0"/>
                     </StackPanel>
-
                     <StackPanel Grid.Column="1">
-                        <TextBlock Text="24h Change" FontWeight="Medium" Foreground="#777" Margin="0,0,0,4"/>
-                        <TextBlock Text="{Binding Details.PriceChange24h, StringFormat={}{0:+0.00;-0.00;0.00}}"
-                                 FontSize="20" FontWeight="SemiBold"
-                                 Foreground="{Binding Details.PriceChangePercentage24h, Converter={StaticResource PctColor}}"/>
+                        <TextBlock Text="24h Change"
+                       FontWeight="Medium"
+                       Foreground="{DynamicResource SubtleFontBrush}"
+                       Margin="0,0,0,4"/>
+                        <TextBox Text="{Binding Details.PriceChange24h, StringFormat={}{0:+0.00;-0.00;0.00}, Mode=OneWay}"
+                     FontSize="20"
+                     FontWeight="SemiBold"
+                     Foreground="{Binding Details.PriceChangePercentage24h, Converter={StaticResource PctColor}}"
+                     Style="{StaticResource SelectableTextBoxStyle}"
+                     Padding="0"
+                     Background="Transparent"
+                     BorderThickness="0"/>
                     </StackPanel>
-
                     <StackPanel Grid.Column="2">
-                        <TextBlock Text="% Change" FontWeight="Medium" Foreground="#777" Margin="0,0,0,4"/>
-                        <TextBlock Text="{Binding Details.PriceChangePercentage24h, StringFormat={}{0:+0.##;-0.##;0}%}"
-                                 FontSize="20" FontWeight="SemiBold"
-                                 Foreground="{Binding Details.PriceChangePercentage24h, Converter={StaticResource PctColor}}"/>
+                        <TextBlock Text="% Change"
+                       FontWeight="Medium"
+                       Foreground="{DynamicResource SubtleFontBrush}"
+                       Margin="0,0,0,4"/>
+                        <TextBox Text="{Binding Details.PriceChangePercentage24h, StringFormat={}{0:+0.##;-0.##;0}%, Mode=OneWay}"
+                     FontSize="20"
+                     FontWeight="SemiBold"
+                     Foreground="{Binding Details.PriceChangePercentage24h, Converter={StaticResource PctColor}}"
+                     Style="{StaticResource SelectableTextBoxStyle}"
+                     Padding="0"
+                     Background="Transparent"
+                     BorderThickness="0"/>
                     </StackPanel>
-
                     <StackPanel Grid.Column="3">
-                        <TextBlock Text="Volume" FontWeight="Medium" Foreground="#777" Margin="0,0,0,4"/>
-                        <TextBlock Text="{Binding Details.TotalVolume, StringFormat=N0}" FontSize="20" FontWeight="SemiBold"/>
+                        <TextBlock Text="Volume"
+                       FontWeight="Medium"
+                       Foreground="{DynamicResource SubtleFontBrush}"
+                       Margin="0,0,0,4"/>
+                        <TextBox Text="{Binding Details.TotalVolume, StringFormat=N0, Mode=OneWay}"
+                     FontSize="20"
+                     FontWeight="SemiBold"
+                     Foreground="{DynamicResource FontBrush}"
+                     Style="{StaticResource SelectableTextBoxStyle}"
+                     Padding="0"
+                     Background="Transparent"
+                     BorderThickness="0"/>
                     </StackPanel>
                 </Grid>
             </Border>
-
-            <Border Background="White" CornerRadius="8" Padding="16" Margin="0,0,0,20"
+            <Border Background="{DynamicResource CardBrush}"
+                    CornerRadius="8"
+                    Padding="16"
+                    Margin="0,0,0,20"
                     Effect="{StaticResource ShadowEffect}">
                 <StackPanel>
-                    <TextBlock Text="Description" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12"/>
-                    <TextBlock Text="{Binding DescriptionPlain}" TextWrapping="Wrap"/>
+                    <TextBlock Text="Description"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource FontBrush}"
+                               Margin="0,0,0,12"/>
+                    <TextBox Text="{Binding DescriptionPlain, Mode=OneWay}"
+                             Style="{StaticResource SelectableTextBoxStyle}"
+                             Padding="0"
+                             MinHeight="100"/>
                 </StackPanel>
             </Border>
-
-            <Border Background="White" CornerRadius="8" Padding="16" Margin="0,0,0,20"
+            <Border Background="{DynamicResource CardBrush}"
+                    CornerRadius="8"
+                    Padding="16"
+                    Margin="0,0,0,20"
                     Effect="{StaticResource ShadowEffect}">
                 <StackPanel>
                     <Grid Margin="0,0,0,12">
@@ -148,24 +230,29 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <TextBlock Grid.Column="0" Text="7-Day Price Chart" FontSize="18" FontWeight="SemiBold"/>
+                        <TextBlock Grid.Column="0"
+                                   Text="7-Day Price Chart"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource FontBrush}"/>
 
-                        <Button Grid.Column="1" Content="Toggle Chart" 
+                        <Button Grid.Column="1"
+                                Content="Toggle Chart"
                                 Command="{Binding ToggleChartStyleCommand}"
                                 Width="120" Height="32"
                                 Style="{StaticResource TradeButtonStyle}"/>
                     </Grid>
 
-                    <oxy:PlotView x:Name="PlotView" Model="{Binding PriceChart}" Height="300"/>
+                    <oxy:PlotView x:Name="PlotView"
+                                  Model="{Binding PriceChart}"
+                                  Height="300"/>
                 </StackPanel>
             </Border>
-
             <Grid Margin="0,0,0,20">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-
                 <Grid Grid.Row="0" Margin="0,0,0,12">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -173,22 +260,31 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock Grid.Column="0" Text="Markets" FontSize="18" FontWeight="SemiBold"/>
-                    <Button Grid.Column="2" 
-                            Content="{Binding SortButtonText}" 
+                    <TextBlock Grid.Column="0"
+                               Text="Markets"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource FontBrush}"/>
+
+                    <Button Grid.Column="2"
+                            Content="{Binding SortButtonText}"
                             Command="{Binding SortTickersByPriceCommand}"
                             Width="100" Height="32"
                             Style="{StaticResource SortButtonStyle}"/>
                 </Grid>
-
-                <Border Grid.Row="1" Background="White" CornerRadius="8" Effect="{StaticResource ShadowEffect}" Padding="0">
+                <Border Grid.Row="1"
+                        Background="{DynamicResource CardBrush}"
+                        CornerRadius="8"
+                        Effect="{StaticResource ShadowEffect}"
+                        Padding="0">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
-
-                        <Grid Grid.Row="0" Background="#F5F7FA" Height="40">
+                        <Grid Grid.Row="0"
+                              Background="{DynamicResource SecondaryCardBrush}"
+                              Height="40">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="80"/>
@@ -197,18 +293,45 @@
                                 <ColumnDefinition Width="80"/>
                             </Grid.ColumnDefinitions>
 
-                            <TextBlock Grid.Column="0" Text="Exchange" VerticalAlignment="Center" Margin="16,0,0,0" FontWeight="SemiBold" Foreground="#505A64"/>
-                            <TextBlock Grid.Column="1" Text="Base" VerticalAlignment="Center" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="#505A64"/>
-                            <TextBlock Grid.Column="2" Text="Target" VerticalAlignment="Center" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="#505A64"/>
-                            <TextBlock Grid.Column="3" Text="Price (USD)" VerticalAlignment="Center" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="#505A64"/>
-                            <TextBlock Grid.Column="4" Text="Trade" VerticalAlignment="Center" HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="#505A64"/>
+                            <TextBlock Grid.Column="0"
+                                       Text="Exchange"
+                                       VerticalAlignment="Center"
+                                       Margin="16,0,0,0"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource SubtleFontBrush}"/>
+                            <TextBlock Grid.Column="1"
+                                       Text="Base"
+                                       VerticalAlignment="Center"
+                                       HorizontalAlignment="Center"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource SubtleFontBrush}"/>
+                            <TextBlock Grid.Column="2"
+                                       Text="Target"
+                                       VerticalAlignment="Center"
+                                       HorizontalAlignment="Center"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource SubtleFontBrush}"/>
+                            <TextBlock Grid.Column="3"
+                                       Text="Price (USD)"
+                                       VerticalAlignment="Center"
+                                       HorizontalAlignment="Center"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource SubtleFontBrush}"/>
+                            <TextBlock Grid.Column="4"
+                                       Text="Trade"
+                                       VerticalAlignment="Center"
+                                       HorizontalAlignment="Center"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource SubtleFontBrush}"/>
                         </Grid>
-
-                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" MaxHeight="320">
+                        <ScrollViewer Grid.Row="1"
+                                      VerticalScrollBarVisibility="Auto"
+                                      MaxHeight="320">
                             <ItemsControl ItemsSource="{Binding TickersView}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border BorderThickness="0,0,0,1" BorderBrush="#EEF0F2">
+                                        <Border BorderThickness="0,0,0,1"
+                                                BorderBrush="{DynamicResource BorderBrush}">
                                             <Grid Height="50">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="*"/>
@@ -217,42 +340,75 @@
                                                     <ColumnDefinition Width="120"/>
                                                     <ColumnDefinition Width="80"/>
                                                 </Grid.ColumnDefinitions>
-
                                                 <Grid Grid.Column="0" Margin="16,0,0,0">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="Auto"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
 
-                                                    <Border Grid.Column="0" Width="24" Height="24" CornerRadius="12" Background="#F0F4F8" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding MarketName, Converter={StaticResource InitialsConverter}}" 
-                                                                 HorizontalAlignment="Center" VerticalAlignment="Center" 
-                                                                 FontSize="10" FontWeight="SemiBold"/>
+                                                    <Border Grid.Column="0"
+                                                            Width="24" Height="24"
+                                                            CornerRadius="12"
+                                                            Background="{DynamicResource SecondaryCardBrush}"
+                                                            VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding MarketName,
+                                                               Converter={StaticResource InitialsConverter}}"
+                                                                   HorizontalAlignment="Center"
+                                                                   VerticalAlignment="Center"
+                                                                   FontSize="10"
+                                                                   FontWeight="SemiBold"
+                                                                   Foreground="{DynamicResource SubtleFontBrush}"/>
                                                     </Border>
 
-                                                    <TextBlock Grid.Column="1" Text="{Binding MarketName}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                                    <TextBlock Grid.Column="1"
+                                                               Text="{Binding MarketName}"
+                                                               VerticalAlignment="Center"
+                                                               Margin="8,0,0,0"
+                                                               Foreground="{DynamicResource FontBrush}"/>
                                                 </Grid>
-
-                                                <Border Grid.Column="1" Background="{Binding Base, Converter={StaticResource CurrencyColorConverter}}" 
-                                                       CornerRadius="4" Width="50" Height="26" VerticalAlignment="Center" HorizontalAlignment="Center">
-                                                    <TextBlock Text="{Binding Base}" HorizontalAlignment="Center" VerticalAlignment="Center" 
-                                                             Foreground="White" FontWeight="SemiBold" FontSize="12"/>
+                                                <Border Grid.Column="1"
+                                                        Background="{Binding Base,
+                                                             Converter={StaticResource CurrencyColorConverter}}"
+                                                        CornerRadius="4"
+                                                        Width="50" Height="26"
+                                                        VerticalAlignment="Center"
+                                                        HorizontalAlignment="Center">
+                                                    <TextBlock Text="{Binding Base}"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"
+                                                               Foreground="{DynamicResource CardBrush}"
+                                                               FontWeight="SemiBold"
+                                                               FontSize="12"/>
                                                 </Border>
-
-                                                <Border Grid.Column="2" Background="{Binding Target, Converter={StaticResource CurrencyColorConverter}}" 
-                                                       CornerRadius="4" Width="50" Height="26" VerticalAlignment="Center" HorizontalAlignment="Center">
-                                                    <TextBlock Text="{Binding Target}" HorizontalAlignment="Center" VerticalAlignment="Center" 
-                                                             Foreground="White" FontWeight="SemiBold" FontSize="12"/>
+                                                <Border Grid.Column="2"
+                                                        Background="{Binding Target,
+                                                             Converter={StaticResource CurrencyColorConverter}}"
+                                                        CornerRadius="4"
+                                                        Width="50" Height="26"
+                                                        VerticalAlignment="Center"
+                                                        HorizontalAlignment="Center">
+                                                    <TextBlock Text="{Binding Target}"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"
+                                                               Foreground="{DynamicResource CardBrush}"
+                                                               FontWeight="SemiBold"
+                                                               FontSize="12"/>
                                                 </Border>
-
-                                                <TextBlock Grid.Column="3" Text="{Binding LastPriceUsd, StringFormat={}{0:F4}}" 
-                                                         HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="Consolas"/>
-
-                                                <Button Grid.Column="4" Content="Trade" Width="60" Height="28" 
-                                                      HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                      Command="{Binding DataContext.OpenTradeUrlCommand,  RelativeSource={RelativeSource AncestorType=Page}}"
-                                                      CommandParameter="{Binding}"
-                                                      Style="{StaticResource TradeButtonStyle}"/>
+                                                <TextBlock Grid.Column="3"
+                                                           Text="{Binding LastPriceUsd, StringFormat={}{0:F4}}"
+                                                           HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center"
+                                                           FontFamily="Consolas"
+                                                           Foreground="{DynamicResource FontBrush}"/>
+                                                <Button Grid.Column="4"
+                                                        Content="Trade"
+                                                        Width="60" Height="28"
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center"
+                                                        Command="{Binding DataContext.OpenTradeUrlCommand,
+                                                                  RelativeSource={RelativeSource AncestorType=Page}}"
+                                                        CommandParameter="{Binding}"
+                                                        Style="{StaticResource TradeButtonStyle}"/>
                                             </Grid>
                                         </Border>
                                     </DataTemplate>
